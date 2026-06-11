@@ -1,13 +1,13 @@
-/* MAHMOUD RABIE — portfolio
-   Vanilla JS. Budget: observers, a ticker toggle, filters,
-   and one canvas prism. Nothing per-frame except the beam. */
+/* MAHMOUD RABIE - portfolio
+   Vanilla JS. Observers, a ticker toggle, filters, and one canvas
+   prism with real Snell-law refraction and dispersion. */
 
 (() => {
   "use strict";
 
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
 
-  /* ─── Sticky masthead state via sentinel ─── */
+  /* --- Sticky masthead state via sentinel --- */
   const masthead = document.querySelector(".masthead");
   const sentinel = document.getElementById("masthead-sentinel");
   if (masthead && sentinel && "IntersectionObserver" in window) {
@@ -16,7 +16,7 @@
     }).observe(sentinel);
   }
 
-  /* ─── Scroll reveal (one shared observer) ─── */
+  /* --- Scroll reveal (one shared observer) --- */
   const revealEls = document.querySelectorAll("[data-reveal]");
   revealEls.forEach((el, i) => el.style.setProperty("--i", String(i % 3)));
   if (reduceMotion.matches || !("IntersectionObserver" in window)) {
@@ -33,7 +33,7 @@
     revealEls.forEach((el) => io.observe(el));
   }
 
-  /* ─── Ticker pause/play (WCAG 2.2.2) ─── */
+  /* --- Ticker pause/play (WCAG 2.2.2) --- */
   const ticker = document.querySelector(".ticker");
   const tickerToggle = document.getElementById("ticker-toggle");
   if (ticker && tickerToggle) {
@@ -45,7 +45,7 @@
     });
   }
 
-  /* ─── Domain filters ─── */
+  /* --- Domain filters --- */
   const filterButtons = document.querySelectorAll(".filter");
   const filterables = document.querySelectorAll(".records > li, .archive__row");
   filterButtons.forEach((btn) => {
@@ -64,23 +64,60 @@
     });
   });
 
-  /* ─── The prism ───────────────────────────────────────────────
-     Cursor = light source. Beam hits the prism, exits as a
-     magenta→violet dispersion fan. Static frame under
-     prefers-reduced-motion; loop pauses offscreen.            */
+  /* --- The prism ------------------------------------------------
+     Cursor = light source. The beam refracts at each glass face by
+     Snell's law; each spectral band gets its own refractive index,
+     so the dispersion fan is the physics, not an effect. Static
+     frame under prefers-reduced-motion; loop pauses offscreen.   */
   const canvas = document.getElementById("beam");
   const hero = document.querySelector(".hero");
   if (!canvas || !hero) return;
   const ctx = canvas.getContext("2d");
 
-  const SPECTRUM = ["#FF3D9A", "#F4509F", "#D957C9", "#BC60E3", "#A467F2", "#8B6CFF"];
+  // magenta -> violet, with increasing refractive index.
+  // Low-index "glass": at n~1.5 a 60-degree prism sits at the critical
+  // angle for centroid-aimed rays (everything internally reflects), and
+  // above n~1.12 some bands bounce while others exit, fracturing the
+  // fan. n 1.05-1.12 keeps all six bands on the direct path from every
+  // source position, so the fan stays whole and moves continuously.
+  const SPECTRUM = [
+    { c: "#FF3D9A", n: 1.050 },
+    { c: "#F4509F", n: 1.064 },
+    { c: "#D957C9", n: 1.078 },
+    { c: "#BC60E3", n: 1.092 },
+    { c: "#A467F2", n: 1.106 },
+    { c: "#8B6CFF", n: 1.120 },
+  ];
+
+  /* vector helpers */
+  const sub = (a, b) => ({ x: a.x - b.x, y: a.y - b.y });
+  const add = (a, b) => ({ x: a.x + b.x, y: a.y + b.y });
+  const mul = (v, s) => ({ x: v.x * s, y: v.y * s });
+  const dot = (a, b) => a.x * b.x + a.y * b.y;
+  const norm = (v) => { const l = Math.hypot(v.x, v.y) || 1; return { x: v.x / l, y: v.y / l }; };
+
   let w = 0, h = 0, dpr = 1;
-  let prism = null;
-  // light source position (lerped) and its target
+  let prism = null;          // { verts, edges, normals, infl, cx, cy }
   let sx = 0, sy = 0, tx = 0, ty = 0;
-  let lastPointer = 0;
-  let rafId = 0;
-  let heroVisible = true;
+  let lastPointer = 0, rafId = 0, heroVisible = true, tPrev = 0;
+
+  function buildPrism() {
+    const cx = w * 0.74, cy = h * 0.46, r = Math.min(h, w) * 0.16;
+    const verts = [
+      { x: cx, y: cy - r },                    // apex
+      { x: cx - r * 0.92, y: cy + r * 0.72 },  // bottom-left
+      { x: cx + r * 0.92, y: cy + r * 0.72 },  // bottom-right
+    ];
+    const edges = verts.map((p, i) => ({ p, q: verts[(i + 1) % 3] }));
+    const normals = edges.map(({ p, q }) => {
+      let n = norm({ x: q.y - p.y, y: -(q.x - p.x) });
+      if (dot(n, sub({ x: cx, y: cy }, p)) > 0) n = mul(n, -1); // outward
+      return n;
+    });
+    // inflated copy keeps the light source from entering the glass
+    const infl = verts.map((v) => add({ x: cx, y: cy }, mul(sub(v, { x: cx, y: cy }), 1.28)));
+    prism = { verts, edges, normals, infl, cx, cy };
+  }
 
   function resize() {
     dpr = Math.min(devicePixelRatio || 1, 2);
@@ -89,18 +126,88 @@
     canvas.width = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const cx = w * 0.74, cy = h * 0.46, r = Math.min(h, w) * 0.16;
-    prism = {
-      cx, cy,
-      a: { x: cx, y: cy - r },                       // apex
-      b: { x: cx - r * 0.92, y: cy + r * 0.72 },     // bottom-left
-      c: { x: cx + r * 0.92, y: cy + r * 0.72 },     // bottom-right
-    };
+    buildPrism();
     if (!lastPointer) { tx = w * 0.16; ty = h * 0.3; sx = tx; sy = ty; }
   }
 
+  function inTriangle(pt, verts) {
+    let neg = false, pos = false;
+    for (let i = 0; i < 3; i++) {
+      const a = verts[i], b = verts[(i + 1) % 3];
+      const cr = (b.x - a.x) * (pt.y - a.y) - (b.y - a.y) * (pt.x - a.x);
+      if (cr < 0) neg = true; else if (cr > 0) pos = true;
+    }
+    return !(neg && pos);
+  }
+
+  // t along ray o+t*d hitting segment p-q, or null
+  function rayEdge(o, d, p, q) {
+    const r = sub(q, p);
+    const denom = d.x * r.y - d.y * r.x;
+    if (Math.abs(denom) < 1e-9) return null;
+    const t = ((p.x - o.x) * r.y - (p.y - o.y) * r.x) / denom;
+    const s = ((p.x - o.x) * d.y - (p.y - o.y) * d.x) / denom;
+    return (t > 1e-6 && s >= 0 && s <= 1) ? t : null;
+  }
+
+  function firstHit(o, d, skip) {
+    let best = null;
+    for (let i = 0; i < 3; i++) {
+      if (i === skip) continue;
+      const t = rayEdge(o, d, prism.edges[i].p, prism.edges[i].q);
+      if (t !== null && (!best || t < best.t)) best = { t, i, point: add(o, mul(d, t)) };
+    }
+    return best;
+  }
+
+  // Snell's law. d: unit incident, n: unit normal opposing d, eta: n1/n2.
+  // Returns null at total internal reflection.
+  function refract(d, n, eta) {
+    const cosI = -dot(d, n);
+    const s2 = eta * eta * (1 - cosI * cosI);
+    if (s2 > 1) return null;
+    const cosT = Math.sqrt(1 - s2);
+    return norm(add(mul(d, eta), mul(n, eta * cosI - cosT)));
+  }
+
+  const reflect = (d, n) => norm(sub(d, mul(n, 2 * dot(d, n))));
+
+  // keep the (lerped) source target outside the inflated prism
+  function clampTarget(x, y) {
+    const pt = { x, y };
+    if (!inTriangle(pt, prism.infl)) return pt;
+    const C = { x: prism.cx, y: prism.cy };
+    let dir = norm(sub(pt, C));
+    if (!dir.x && !dir.y) dir = { x: -1, y: 0 };
+    let t = 0;
+    for (let i = 0; i < 3; i++) {
+      const hit = rayEdge(C, dir, prism.infl[i], prism.infl[(i + 1) % 3]);
+      if (hit !== null) t = Math.max(t, hit);
+    }
+    return add(C, mul(dir, t * 1.04));
+  }
+
+  function stroke(p, q, width, style) {
+    ctx.beginPath();
+    ctx.moveTo(p.x, p.y);
+    ctx.lineTo(q.x, q.y);
+    ctx.lineWidth = width;
+    ctx.strokeStyle = style;
+    ctx.stroke();
+  }
+
+  function glow(p, radius, color) {
+    const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, radius);
+    g.addColorStop(0, color);
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+    ctx.fillStyle = g;
+    ctx.fill();
+  }
+
   function drawPrism() {
-    const { a, b, c } = prism;
+    const [a, b, c] = prism.verts;
     ctx.beginPath();
     ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.lineTo(c.x, c.y); ctx.closePath();
     ctx.fillStyle = "rgba(242,238,232,0.03)";
@@ -110,78 +217,108 @@
     ctx.stroke();
   }
 
-  function draw(t) {
+  function draw() {
     ctx.clearRect(0, 0, w, h);
-    const { a, b, c } = prism;
-    // entry: midpoint of the left face, exit: midpoint of the right face
-    const P = { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
-    const E = { x: (a.x + c.x) / 2, y: (a.y + c.y) / 2 };
+    const S = { x: sx, y: sy };
+    const aim = norm(sub({ x: prism.cx, y: prism.cy }, S));
+    const entry = firstHit(S, aim, -1);
 
     ctx.globalCompositeOperation = "lighter";
 
-    // incident beam: source → entry point (double-stroked: halo + core)
-    const beam = ctx.createLinearGradient(sx, sy, P.x, P.y);
-    beam.addColorStop(0, "rgba(242,238,232,0)");
-    beam.addColorStop(0.25, "rgba(242,238,232,0.55)");
-    beam.addColorStop(1, "rgba(255,61,154,0.9)");
-    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(P.x, P.y);
-    ctx.strokeStyle = "rgba(255,61,154,0.10)"; ctx.lineWidth = 7; ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(P.x, P.y);
-    ctx.strokeStyle = beam; ctx.lineWidth = 1.4; ctx.stroke();
+    if (entry) {
+      const N = prism.normals[entry.i];
 
-    // source node
-    ctx.beginPath(); ctx.arc(sx, sy, 3, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(242,238,232,0.9)"; ctx.fill();
+      // incident beam: halo, body, core
+      stroke(S, entry.point, 8, "rgba(255,61,154,0.06)");
+      const body = ctx.createLinearGradient(S.x, S.y, entry.point.x, entry.point.y);
+      body.addColorStop(0, "rgba(242,238,232,0)");
+      body.addColorStop(0.3, "rgba(242,238,232,0.35)");
+      body.addColorStop(1, "rgba(255,61,154,0.8)");
+      stroke(S, entry.point, 2.4, body);
+      const core = ctx.createLinearGradient(S.x, S.y, entry.point.x, entry.point.y);
+      core.addColorStop(0, "rgba(242,238,232,0)");
+      core.addColorStop(1, "rgba(242,238,232,0.9)");
+      stroke(S, entry.point, 1, core);
 
-    // internal segment, dimmer
-    ctx.beginPath(); ctx.moveTo(P.x, P.y); ctx.lineTo(E.x, E.y);
-    ctx.strokeStyle = "rgba(242,238,232,0.30)"; ctx.lineWidth = 1; ctx.stroke();
+      // refract each band through the glass; reflect internally on TIR
+      const reach = w * 1.3;
+      let exitMid = null;
+      for (let i = 0; i < SPECTRUM.length; i++) {
+        const band = SPECTRUM[i];
+        let d = refract(aim, N, 1 / band.n); // air->glass never TIRs
+        if (!d) continue;
+        let o = entry.point, skip = entry.i;
+        let exitPoint = null, dOut = null;
 
-    // dispersion fan: blend of incoming direction and the right-face normal
-    const inAngle = Math.atan2(E.y - sy, E.x - sx);
-    const normal = Math.atan2(E.y - prism.cy, E.x - prism.cx);
-    const base = inAngle * 0.45 + normal * 0.55;
-    const reach = w * 1.2;
-    const n = SPECTRUM.length;
-    for (let i = 0; i < n; i++) {
-      const spread = (i / (n - 1) - 0.5) * 0.62;
-      const wobble = Math.sin(t / 1400 + i * 1.7) * 0.012;
-      const ang = base + spread + wobble;
-      const x2 = E.x + Math.cos(ang) * reach;
-      const y2 = E.y + Math.sin(ang) * reach;
-      const g = ctx.createLinearGradient(E.x, E.y, x2, y2);
-      g.addColorStop(0, SPECTRUM[i] + "E6");
-      g.addColorStop(0.55, SPECTRUM[i] + "38");
-      g.addColorStop(1, SPECTRUM[i] + "00");
-      ctx.beginPath(); ctx.moveTo(E.x, E.y); ctx.lineTo(x2, y2);
-      ctx.strokeStyle = g; ctx.lineWidth = 1.6; ctx.stroke();
+        for (let bounce = 0; bounce < 3 && !dOut; bounce++) {
+          const hit = firstHit(o, d, skip);
+          if (!hit) break;
+          stroke(o, hit.point, 1, band.c + "30"); // path inside the glass
+          const M = prism.normals[hit.i];
+          const out = refract(d, mul(M, -1), band.n);
+          if (out) {
+            exitPoint = hit.point;
+            dOut = out;
+          } else {
+            d = reflect(d, M);
+            o = hit.point;
+            skip = hit.i;
+          }
+        }
+        if (!dOut) continue;
+        if (i === Math.floor(SPECTRUM.length / 2)) exitMid = exitPoint;
+
+        // out into the air
+        const far = add(exitPoint, mul(dOut, reach));
+        stroke(exitPoint, far, 2.6, band.c + "1F");
+        const ray = ctx.createLinearGradient(exitPoint.x, exitPoint.y, far.x, far.y);
+        ray.addColorStop(0, band.c + "D9");
+        ray.addColorStop(0.5, band.c + "38");
+        ray.addColorStop(1, band.c + "00");
+        stroke(exitPoint, far, 1.4, ray);
+      }
+
+      glow(entry.point, 9, "rgba(242,238,232,0.35)");
+      if (exitMid) glow(exitMid, 14, "rgba(255,61,154,0.4)");
     }
 
-    // exit glow
-    ctx.beginPath(); ctx.arc(E.x, E.y, 12, 0, Math.PI * 2);
-    const halo = ctx.createRadialGradient(E.x, E.y, 0, E.x, E.y, 12);
-    halo.addColorStop(0, "rgba(255,61,154,0.5)");
-    halo.addColorStop(1, "rgba(255,61,154,0)");
-    ctx.fillStyle = halo; ctx.fill();
+    // source node
+    glow(S, 10, "rgba(242,238,232,0.25)");
+    ctx.beginPath();
+    ctx.arc(S.x, S.y, 2.6, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(242,238,232,0.95)";
+    ctx.fill();
 
     ctx.globalCompositeOperation = "source-over";
     drawPrism();
   }
 
   function frame(t) {
-    // ambient drift when the pointer has been idle (or never arrived)
+    if (!tPrev) tPrev = t;
+    const dt = Math.min((t - tPrev) / 1000, 0.05);
+    tPrev = t;
+
+    // ambient drift once the pointer has been idle (or never arrived)
     if (performance.now() - lastPointer > 4000) {
-      tx = w * (0.18 + 0.07 * Math.sin(t / 5200));
-      ty = h * (0.32 + 0.14 * Math.sin(t / 3600 + 1.3));
+      const drift = clampTarget(
+        w * (0.16 + 0.05 * Math.sin(t / 7000)),
+        h * (0.34 + 0.10 * Math.sin(t / 9400 + 1.3))
+      );
+      tx = drift.x; ty = drift.y;
     }
-    sx += (tx - sx) * 0.07;
-    sy += (ty - sy) * 0.07;
-    draw(t);
+
+    // frame-rate-independent smoothing
+    const k = 1 - Math.exp(-dt * 5);
+    sx += (tx - sx) * k;
+    sy += (ty - sy) * k;
+
+    draw();
     rafId = requestAnimationFrame(frame);
   }
 
   function start() {
     if (!rafId && heroVisible && !document.hidden && !reduceMotion.matches) {
+      tPrev = 0;
       rafId = requestAnimationFrame(frame);
     }
   }
@@ -192,17 +329,18 @@
 
   resize();
   if (reduceMotion.matches) {
-    draw(0); // one static frame, no loop
+    draw(); // one static frame, no loop
   } else {
     start();
   }
 
-  new ResizeObserver(() => { resize(); if (reduceMotion.matches) draw(0); }).observe(hero);
+  new ResizeObserver(() => { resize(); if (reduceMotion.matches) draw(); }).observe(hero);
 
   hero.addEventListener("pointermove", (e) => {
     const r = hero.getBoundingClientRect();
-    tx = e.clientX - r.left;
-    ty = e.clientY - r.top;
+    const clamped = clampTarget(e.clientX - r.left, e.clientY - r.top);
+    tx = clamped.x;
+    ty = clamped.y;
     lastPointer = performance.now();
   }, { passive: true });
 
@@ -216,6 +354,6 @@
     document.hidden ? stop() : start();
   });
   reduceMotion.addEventListener?.("change", () => {
-    if (reduceMotion.matches) { stop(); draw(0); } else { start(); }
+    if (reduceMotion.matches) { stop(); draw(); } else { start(); }
   });
 })();
