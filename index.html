@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <title>Mahmoud Rabie — Electrical Engineering Portfolio</title>
+  <meta name="description" content="Portfolio of Mahmoud Rabie — third-year UBC electrical engineering student building FPGA accelerators, silicon photonics, and machine-learning systems. Seeking Fall 2026 co-op.">
+  <meta property="og:title" content="Mahmoud Rabie — Electrical Engineering Portfolio">
+  <meta property="og:description" content="FPGA accelerators, silicon photonics, machine learning. UBC Electrical Engineering, seeking Fall 2026 co-op.">
+  <meta property="og:type" content="website">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Instrument+Sans:wght@400;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script>document.documentElement.classList.add('js')</script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Mahmoud Rabie",
+    "email": "mailto:mahmoudrabie2006216@gmail.com",
+    "url": "https://github.com/robie1337",
+    "sameAs": ["https://www.linkedin.com/in/mahmoudrabie21", "https://github.com/robie1337"],
+    "jobTitle": "Electrical Engineering Student",
+    "affiliation": { "@type": "CollegeOrUniversity", "name": "University of British Columbia" }
+  }
+  </script>
+</head>
+<body>
+  <a class="skip mono" href="#work">Jump to the work ↓</a>
+  <div class="grain" aria-hidden="true"></div>
+
+  <div id="masthead-sentinel" aria-hidden="true"></div>
+  <header class="masthead" id="top">
+    <a class="masthead__name mono" href="#top">MAHMOUD&nbsp;RABIE</a>
+    <nav class="masthead__nav" aria-label="Sections">
+      <a class="navlink mono" href="#work">WORK</a>
+      <a class="navlink mono" href="#research">RESEARCH</a>
+      <a class="navlink mono" href="#about">ABOUT</a>
+      <a class="navlink mono" href="#contact">CONTACT</a>
+    </nav>
+  </header>
+
+  <main>
+    <!-- ───────────────────────── HERO ───────────────────────── -->
+    <section class="hero" aria-labelledby="hero-title">
+      <canvas id="beam" aria-hidden="true"></canvas>
+      <div class="hero__inner">
+        <p class="kicker mono">ELECTRICAL ENGINEERING · UNIVERSITY OF BRITISH COLUMBIA</p>
+        <h1 id="hero-title">I'm <em>Mahmoud</em>.</h1>
+        <p class="hero__sub">Third-year electrical engineering student building FPGA accelerators,
+          silicon photonics, and machine-learning systems — from the physics to the
+          firmware to the site that ships it.</p>
+        <p class="stamp mono" role="note">SEEKING FALL 2026 CO-OP · HARDWARE / PHOTONICS / ML / SOFTWARE</p>
+        <ul class="linkrow mono">
+          <li><a href="https://github.com/robie1337" rel="me">GITHUB&nbsp;↗</a></li>
+          <li><a href="https://www.linkedin.com/in/mahmoudrabie21" rel="me">LINKEDIN&nbsp;↗</a></li>
+          <li><a href="Rabie_Mahmoud_Resume.pdf">RESUME.PDF&nbsp;↓</a></li>
+          <li><a href="mailto:mahmoudrabie2006216@gmail.com?subject=Co-op%20Inquiry%20%E2%80%94%20REF%3A%20MR-2026">EMAIL</a></li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ───────────────────────── TICKER ───────────────────────── -->
+    <div class="ticker" role="region" aria-label="Technical skills">
+      <button class="ticker__toggle mono" id="ticker-toggle" aria-label="Pause the skills ticker">PAUSE</button>
+      <div class="ticker__viewport">
+        <div class="ticker__track" id="ticker-track">
+          <ul class="ticker__list mono">
+            <li>VERILOG</li><li>✦</li><li>YOSYS</li><li>✦</li><li>PYTHON</li><li>✦</li>
+            <li>TENSORFLOW</li><li>✦</li><li>PYTORCH</li><li>✦</li><li>MEEP&nbsp;FDTD</li><li>✦</li>
+            <li>C/C++</li><li>✦</li><li>MATLAB</li><li>✦</li><li>REACT</li><li>✦</li>
+            <li>SUPABASE</li><li>✦</li><li>POSTGRESQL</li><li>✦</li><li>ESP32</li><li>✦</li>
+            <li>KICAD</li><li>✦</li><li>LINUX</li><li>✦</li><li>GIT</li><li>✦</li>
+          </ul>
+          <ul class="ticker__list mono" aria-hidden="true">
+            <li>VERILOG</li><li>✦</li><li>YOSYS</li><li>✦</li><li>PYTHON</li><li>✦</li>
+            <li>TENSORFLOW</li><li>✦</li><li>PYTORCH</li><li>✦</li><li>MEEP&nbsp;FDTD</li><li>✦</li>
+            <li>C/C++</li><li>✦</li><li>MATLAB</li><li>✦</li><li>REACT</li><li>✦</li>
+            <li>SUPABASE</li><li>✦</li><li>POSTGRESQL</li><li>✦</li><li>ESP32</li><li>✦</li>
+            <li>KICAD</li><li>✦</li><li>LINUX</li><li>✦</li><li>GIT</li><li>✦</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ───────────────────────── §01 WORK ───────────────────────── -->
+    <section class="section" id="work" aria-labelledby="work-title">
+      <header class="section__head">
+        <span class="section__index" aria-hidden="true">01</span>
+        <h2 id="work-title">Selected <em>work</em></h2>
+        <div class="filters" role="group" aria-label="Filter projects by domain">
+          <button class="filter mono is-active" data-filter="all" aria-pressed="true">ALL</button>
+          <button class="filter mono" data-filter="hardware" aria-pressed="false">HARDWARE</button>
+          <button class="filter mono" data-filter="ml" aria-pressed="false">ML</button>
+          <button class="filter mono" data-filter="software" aria-pressed="false">SOFTWARE</button>
+        </div>
+      </header>
+
+      <ol class="records">
+
+        <!-- 01 FPGA -->
+        <li><article class="record" data-domains="hardware ml" data-reveal>
+          <span class="record__numeral" aria-hidden="true">01</span>
+          <div class="record__body">
+            <p class="record__meta mono">MAY 2026 — PRESENT · BOARD BRING-UP</p>
+            <h3 class="record__title"><a href="https://github.com/robie1337" class="record__link">Neural-network inference on a $15 FPGA</a></h3>
+            <p class="record__problem">Can a 9K-LUT hobby FPGA run real CNN inference with a fully open toolchain?</p>
+            <p class="record__desc">An INT8-quantized MNIST accelerator written in Verilog for the GoWin
+              GW1NR-9: parameterized multiply-accumulate datapath with INT32 accumulation, BRAM-backed
+              weight storage, and a UART host interface. The whole flow is open source — Yosys synthesis,
+              nextpnr place-and-route, USB-JTAG programming — running under Linux, with the accelerator
+              now in board bring-up.</p>
+            <p class="record__metric mono">INT8 MAC DATAPATH · FULLY OPEN TOOLCHAIN</p>
+            <ul class="record__tags mono">
+              <li>VERILOG</li><li>YOSYS</li><li>NEXTPNR</li><li>UART</li><li>LINUX</li>
+            </ul>
+          </div>
+          <figure class="record__fig" aria-hidden="true">
+            <svg viewBox="0 0 200 140" fill="none" stroke="currentColor" stroke-width="1">
+              <rect x="30" y="20" width="140" height="100"/>
+              <rect x="50" y="40" width="20" height="20"/><rect x="80" y="40" width="20" height="20"/><rect x="110" y="40" width="20" height="20"/><rect x="140" y="40" width="20" height="20"/>
+              <rect x="50" y="70" width="20" height="20"/><rect x="80" y="70" width="20" height="20"/><rect x="110" y="70" width="20" height="20"/><rect x="140" y="70" width="20" height="20"/>
+              <path d="M30 50 L10 50 M30 80 L10 80 M170 50 L190 50 M170 80 L190 80 M70 20 L70 6 M100 20 L100 6 M130 20 L130 6 M70 120 L70 134 M100 120 L100 134 M130 120 L130 134"/>
+            </svg>
+          </figure>
+        </article></li>
+
+        <!-- 02 PHOTONIC -->
+        <li><article class="record" data-domains="hardware" data-reveal>
+          <span class="record__numeral" aria-hidden="true">02</span>
+          <div class="record__body">
+            <p class="record__meta mono">APR — JUN 2026 · V1 COMPLETE</p>
+            <h3 class="record__title"><a href="https://github.com/robie1337" class="record__link">Inverse-designing silicon photonics with adjoint FDTD</a></h3>
+            <p class="record__problem">Hand-drawing nanophotonic geometry is guesswork — let gradients draw it instead.</p>
+            <p class="record__desc">A Python topology-optimization pipeline on MEEP's FDTD adjoint solver,
+              with every gradient verified against brute-force finite differences to under 1% before each run.
+              It produced a 1×2 power splitter at 99.9% transmission (50.0/50.0 split) and a 1310/1550&nbsp;nm
+              wavelength duplexer near −17&nbsp;dB crosstalk — re-optimized through a 0.12&nbsp;µm
+              minimum-feature filter so the final binary silicon/oxide geometry is actually fabricable.</p>
+            <p class="record__metric mono">99.9% TRANSMISSION · 50.0/50.0 SPLIT</p>
+            <ul class="record__tags mono">
+              <li>PYTHON</li><li>MEEP FDTD</li><li>NLOPT</li><li>NUMPY</li>
+            </ul>
+          </div>
+          <figure class="record__fig" aria-hidden="true">
+            <svg viewBox="0 0 200 140" fill="none" stroke="currentColor" stroke-width="1">
+              <path d="M10 70 H60 C90 70 90 45 120 45 H190"/>
+              <path d="M60 70 C90 70 90 95 120 95 H190"/>
+              <path d="M10 64 H58 M10 76 H58"/>
+              <path d="M125 39 H185 M125 51 H185 M125 89 H185 M125 101 H185" stroke-dasharray="2 3"/>
+              <circle cx="60" cy="70" r="26" stroke-dasharray="3 3"/>
+            </svg>
+          </figure>
+        </article></li>
+
+        <!-- 03 RECYCLA -->
+        <li><article class="record" data-domains="ml hardware software" data-reveal>
+          <span class="record__numeral" aria-hidden="true">03</span>
+          <div class="record__body">
+            <p class="record__meta mono">2025 — 2026 · DEPLOYED PROTOTYPE</p>
+            <h3 class="record__title"><a href="https://github.com/robie1337/Recycla" class="record__link">Recycla — waste sorting, camera to servo</a></h3>
+            <p class="record__problem">Recycling fails at the bin, where people guess. A camera doesn't have to.</p>
+            <p class="record__desc">An end-to-end AI sorting system: a MobileNetV2 transfer-learning model
+              trained across 5 material classes (~5,000 images) in TensorFlow/Keras, integrated with
+              servo-actuated Raspberry Pi hardware that physically routes each item, plus a public web
+              platform with real-time classification feedback. Trained the model, built the
+              model-to-hardware integration, shipped the site.</p>
+            <p class="record__metric mono">5 CLASSES · ~5,000 IMAGES</p>
+            <ul class="record__tags mono">
+              <li>TENSORFLOW</li><li>KERAS</li><li>RASPBERRY PI</li><li>REACT</li>
+            </ul>
+            <ul class="record__links mono">
+              <li><a href="https://github.com/robie1337/Recycla">GITHUB&nbsp;↗</a></li>
+            </ul>
+          </div>
+          <figure class="record__fig" aria-hidden="true">
+            <svg viewBox="0 0 200 140" fill="none" stroke="currentColor" stroke-width="1">
+              <rect x="20" y="20" width="44" height="32"/>
+              <circle cx="42" cy="36" r="9"/>
+              <path d="M42 52 V78 M42 78 H100" stroke-dasharray="3 3"/>
+              <path d="M100 78 L130 58 M100 78 L130 78 M100 78 L130 98"/>
+              <rect x="134" y="48" width="26" height="18"/><rect x="134" y="70" width="26" height="18"/><rect x="134" y="92" width="26" height="18"/>
+            </svg>
+          </figure>
+        </article></li>
+
+        <!-- 04 WORKDAY -->
+        <li><article class="record" data-domains="software" data-reveal>
+          <span class="record__numeral" aria-hidden="true">04</span>
+          <div class="record__body">
+            <p class="record__meta mono">2025 · SHIPPED</p>
+            <h3 class="record__title"><a href="https://github.com/robie1337" class="record__link">UBC Workday → Google Calendar, one click</a></h3>
+            <p class="record__problem">Every term, thousands of students re-type their timetable by hand.</p>
+            <p class="record__desc">A Chrome extension (Manifest V3) that exports UBC course schedules from
+              Workday straight into Google Calendar. Engineered the calendar integration end-to-end:
+              the OAuth2 authorization flow, Google Calendar API event creation, Workday course parsing,
+              and chrome.storage state management inside the service-worker pipeline.</p>
+            <p class="record__metric mono">OAUTH2 → CALENDAR API, END-TO-END</p>
+            <ul class="record__tags mono">
+              <li>JAVASCRIPT</li><li>CHROME MV3</li><li>OAUTH2</li>
+            </ul>
+          </div>
+          <figure class="record__fig" aria-hidden="true">
+            <svg viewBox="0 0 200 140" fill="none" stroke="currentColor" stroke-width="1">
+              <rect x="15" y="30" width="70" height="80"/>
+              <path d="M15 46 H85 M25 60 H75 M25 72 H75 M25 84 H60"/>
+              <path d="M92 70 H116 M110 64 L116 70 L110 76"/>
+              <rect x="122" y="30" width="64" height="80"/>
+              <path d="M122 46 H186"/>
+              <path d="M138 30 V22 M170 30 V22"/>
+              <rect x="132" y="56" width="12" height="10" fill="currentColor" stroke="none"/>
+              <rect x="152" y="76" width="12" height="10" fill="currentColor" stroke="none"/>
+            </svg>
+          </figure>
+        </article></li>
+      </ol>
+
+      <h3 class="archive__title mono" data-reveal>MORE PROJECTS</h3>
+      <ul class="archive" data-reveal>
+        <li class="archive__row" data-domains="ml hardware">
+          <span class="mono archive__id">2026</span>
+          <span class="archive__name">Autodetection recycling bin — PyTorch classifier, wireless control to 10&nbsp;m, Raspberry Pi deploy</span>
+          <span class="mono archive__tags">PYTORCH · PI · GIT</span>
+        </li>
+        <li class="archive__row" data-domains="hardware">
+          <span class="mono archive__id">2025</span>
+          <span class="archive__name">The Lemon Cruiser — Arduino RC vehicle, closed-loop control, 10&nbsp;m radio link</span>
+          <span class="mono archive__tags">C++ · ARDUINO</span>
+        </li>
+        <li class="archive__row" data-domains="software">
+          <span class="mono archive__id">2026</span>
+          <span class="archive__name">UBCO Steel Bridge team website — semantic HTML/CSS, in production
+            <a class="archive__link mono" href="https://robie1337.github.io/ubco-steelbridge-website/">LIVE&nbsp;↗</a>
+            <a class="archive__link mono" href="https://github.com/robie1337/ubco-steelbridge-website">REPO&nbsp;↗</a></span>
+          <span class="mono archive__tags">HTML · CSS3</span>
+        </li>
+        <li class="archive__row" data-domains="hardware">
+          <span class="mono archive__id">2024</span>
+          <span class="archive__name">Aspirin hydrolysis kinetics — Beer–Lambert calibration workflow, pH 2–12 at 55&nbsp;°C</span>
+          <span class="mono archive__tags">VERNIER · COLORIMETRY</span>
+        </li>
+      </ul>
+    </section>
+
+    <hr class="rule" aria-hidden="true">
+
+    <!-- ───────────────────────── §02 RESEARCH ───────────────────────── -->
+    <section class="section" id="research" aria-labelledby="research-title">
+      <header class="section__head">
+        <span class="section__index" aria-hidden="true">02</span>
+        <h2 id="research-title">Research &amp; <em>experience</em></h2>
+      </header>
+
+      <article class="research" data-reveal>
+        <div class="research__body">
+          <p class="record__meta mono">UBC FACULTY OF APPLIED SCIENCE · MAY 2026 — PRESENT</p>
+          <h3 class="record__title">Undergraduate Research Assistant — quantum networking</h3>
+          <p class="record__desc">Researching quantum networking and next-generation communications
+            protocols within an industry-partnered national telecom infrastructure initiative.
+            Building a custom Python simulator that models quantum-network performance and finds
+            optimal quantum-repeater placement across long-distance fiber links.</p>
+          <ul class="record__tags mono">
+            <li>PYTHON</li><li>QUANTUM NETWORKS</li><li>SIMULATION</li><li>FIBER OPTICS</li>
+          </ul>
+        </div>
+        <p class="stamp stamp--award mono" role="note">INTERNATIONAL UG STUDENT<br>RESEARCH AWARD · $10,000</p>
+      </article>
+
+      <ul class="xp" data-reveal>
+        <li class="xp__row">
+          <span class="mono xp__dates">NOV 2025 — PRESENT</span>
+          <div>
+            <h3 class="xp__role">Avionics Subteam — UBCO Aerospace &amp; Rocketry Club</h3>
+            <p class="xp__desc">ESP32 + LoRa rocket telemetry for ground and flight data; breadboard
+              validation of sensor signal paths and power routing, feeding a custom PCB design.</p>
+          </div>
+          <span class="mono xp__tags">ESP32 · LORA · PCB</span>
+        </li>
+        <li class="xp__row">
+          <span class="mono xp__dates">MAY — JUL 2025</span>
+          <div>
+            <h3 class="xp__role">Electrical &amp; Power Engineering Intern — Al-Nisf Electrical Co.</h3>
+            <p class="xp__desc">Commercial power-distribution design in AutoCAD; on-site verification of
+              wiring and switchboard installations against engineering and safety standards.</p>
+          </div>
+          <span class="mono xp__tags">AUTOCAD · FIELD QA</span>
+        </li>
+      </ul>
+    </section>
+
+    <hr class="rule" aria-hidden="true">
+
+    <!-- ───────────────────────── §03 ABOUT ───────────────────────── -->
+    <section class="section" id="about" aria-labelledby="about-title">
+      <header class="section__head">
+        <span class="section__index" aria-hidden="true">03</span>
+        <h2 id="about-title">About</h2>
+      </header>
+
+      <div class="about" data-reveal>
+        <p class="about__text">I'm a third-year electrical engineering student at UBC, and most of my
+          projects land where hardware meets light. This year that meant inverse-designing photonic
+          devices with adjoint FDTD, teaching a $15 FPGA to read handwritten digits, and a
+          quantum-networking research post that came with an international research award. I like
+          owning the whole stack: train the model, write the Verilog, solder the headers, ship the site.</p>
+
+        <dl class="skills">
+          <div class="skills__group">
+            <dt class="mono">HDL &amp; HARDWARE</dt>
+            <dd class="mono">VERILOG · YOSYS/NEXTPNR · KICAD · ESP32 · ARDUINO · RASPBERRY PI · OSCILLOSCOPE</dd>
+          </div>
+          <div class="skills__group">
+            <dt class="mono">MACHINE LEARNING</dt>
+            <dd class="mono">TENSORFLOW · KERAS · PYTORCH · NUMPY · OPENCV</dd>
+          </div>
+          <div class="skills__group">
+            <dt class="mono">SIMULATION</dt>
+            <dd class="mono">MEEP FDTD · ADJOINT METHODS · MATLAB</dd>
+          </div>
+          <div class="skills__group">
+            <dt class="mono">SOFTWARE</dt>
+            <dd class="mono">PYTHON · C/C++ · JAVASCRIPT/TS · REACT · SUPABASE · POSTGRESQL · GIT · LINUX · BASH</dd>
+          </div>
+        </dl>
+      </div>
+    </section>
+  </main>
+
+  <!-- ───────────────────────── CONTACT / COLOPHON ───────────────────────── -->
+  <footer class="colophon" id="contact">
+    <div class="colophon__inner">
+      <h2 class="colophon__title">Point a <em>beam</em> my way.</h2>
+      <p class="colophon__sub">Open to Fall 2026 co-op roles in hardware, photonics, ML, and software.
+        Email gets the fastest response.</p>
+      <ul class="linkrow linkrow--ink mono">
+        <li><a href="mailto:mahmoudrabie2006216@gmail.com?subject=Co-op%20Inquiry%20%E2%80%94%20REF%3A%20MR-2026">EMAIL&nbsp;ME</a></li>
+        <li><a href="https://github.com/robie1337" rel="me">GITHUB&nbsp;↗</a></li>
+        <li><a href="https://www.linkedin.com/in/mahmoudrabie21" rel="me">LINKEDIN&nbsp;↗</a></li>
+        <li><a href="Rabie_Mahmoud_Resume.pdf">RESUME.PDF&nbsp;↓</a></li>
+      </ul>
+      <div class="colophon__notes mono">
+        <p>DESIGNED &amp; BUILT BY MAHMOUD RABIE · © 2026</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
