@@ -104,8 +104,8 @@
   let sx = 0, sy = 0, tx = 0, ty = 0;
   let lastPointer = 0, rafId = 0, heroVisible = true, tPrev = 0;
 
-  function buildPrism() {
-    const cx = w * 0.74, cy = h * 0.46, r = Math.min(h, w) * 0.16;
+  function buildVerts(cx, cy, r) {
+    const C = { x: cx, y: cy };
     const verts = [
       { x: cx, y: cy - r },                    // apex
       { x: cx - r * 0.92, y: cy + r * 0.72 },  // bottom-left
@@ -114,20 +114,18 @@
     const edges = verts.map((p, i) => ({ p, q: verts[(i + 1) % 3] }));
     const normals = edges.map(({ p, q }) => {
       let n = norm({ x: q.y - p.y, y: -(q.x - p.x) });
-      if (dot(n, sub({ x: cx, y: cy }, p)) > 0) n = mul(n, -1); // outward
+      if (dot(n, sub(C, p)) > 0) n = mul(n, -1); // outward
       return n;
     });
     // inflated copy keeps the light source from entering the glass
-    const infl = verts.map((v) => add({ x: cx, y: cy }, mul(sub(v, { x: cx, y: cy }), 1.28)));
-    prism = { verts, edges, normals, infl, cx, cy };
+    const infl = verts.map((v) => add(C, mul(sub(v, C), 1.28)));
+    prism = { verts, edges, normals, infl, cx, cy, r };
   }
 
-  // Tight bounds of the actual hero copy (block elements report
-  // full-width boxes, so measure the real glyph runs via a Range),
-  // padded, plus a resting anchor placed in free space.
-  function buildTextZone() {
+  // Tight bounds of the actual hero copy. Block elements report
+  // full-width boxes, so measure the real glyph runs via a Range.
+  function measureText() {
     textBox = null;
-    idle = { x: w * 0.3, y: Math.max(40, h * 0.22) };
     if (!innerEl) return;
     const range = document.createRange();
     range.selectNodeContents(innerEl);
@@ -140,12 +138,42 @@
       x1 = Math.max(x1, r.right - hr.left); y1 = Math.max(y1, r.bottom - hr.top);
     }
     textBox = { x0: x0 - 26, y0: y0 - 22, x1: x1 + 26, y1: y1 + 22 };
-    // rest in the gap between the copy and the prism if there's room,
-    // otherwise in the band above the copy
-    const gap = prism.verts[1].x - textBox.x1;
-    idle = gap > 120
-      ? { x: textBox.x1 + gap * 0.5, y: h * 0.32 }
-      : { x: Math.max(40, Math.min(w * 0.3, textBox.x0 + 40)), y: Math.max(34, textBox.y0 * 0.5) };
+  }
+
+  // Put the prism in space clear of the copy: in the gap to the right
+  // when the layout is wide, otherwise in the taller free band above
+  // or below the (near full-width) copy on narrow screens. The prism
+  // centroid must end up outside textBox so the source constraint can
+  // keep every beam off the copy.
+  function placePrism() {
+    if (!textBox) { buildVerts(w * 0.74, h * 0.46, Math.min(w, h) * 0.16); return; }
+    const rightGap = w - textBox.x1;
+    if (rightGap >= w * 0.30) {
+      const r = Math.min(w, h) * 0.16;
+      const cx = textBox.x1 + rightGap * 0.52;
+      const cy = Math.max(r + 14, Math.min(h - r * 0.72 - 14, h * 0.44));
+      buildVerts(cx, cy, r);
+    } else {
+      const below = h - textBox.y1, above = textBox.y0;
+      const strip = Math.max(below, above);
+      const r = Math.max(26, Math.min(w * 0.14, (strip - 20) / 2.2));
+      const cy = below >= above
+        ? textBox.y1 + 1.28 * r + 10
+        : textBox.y0 - 1.28 * r - 10;
+      buildVerts(w * 0.62, Math.max(r + 10, Math.min(h - r * 0.72 - 10, cy)), r);
+    }
+  }
+
+  // Resting anchor for ambient drift, on the prism's clear side.
+  function setIdle() {
+    if (!textBox) { idle = { x: w * 0.3, y: h * 0.3 }; return; }
+    const leftOfPrism = prism.cx - prism.r;
+    if (leftOfPrism > textBox.x1 + 20) {
+      idle = { x: (textBox.x1 + leftOfPrism) / 2, y: Math.max(30, Math.min(h - 30, prism.cy * 0.92)) };
+    } else {
+      const x = Math.max(30, Math.min(prism.cx - prism.r - 16, w * 0.32));
+      idle = { x, y: prism.cy >= textBox.y1 ? textBox.y1 + (h - textBox.y1) * 0.5 : textBox.y0 * 0.5 };
+    }
   }
 
   function resize() {
@@ -155,8 +183,9 @@
     canvas.width = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    buildPrism();
-    buildTextZone();
+    measureText();
+    placePrism();
+    setIdle();
     if (!lastPointer) {
       const p = constrainTarget(idle.x, idle.y);
       tx = p.x; ty = p.y; sx = p.x; sy = p.y;
@@ -220,23 +249,27 @@
     return add(C, mul(dir, t * 1.04));
   }
 
-  // push a point to the nearest edge of a rect if it's inside
-  function pushOutRect(pt, box) {
-    if (!box) return pt;
-    if (pt.x < box.x0 || pt.x > box.x1 || pt.y < box.y0 || pt.y > box.y1) return pt;
-    const dl = pt.x - box.x0, dr = box.x1 - pt.x, dt = pt.y - box.y0, db = box.y1 - pt.y;
-    const m = Math.min(dl, dr, dt, db);
-    if (m === dt) return { x: pt.x, y: box.y0 };
-    if (m === db) return { x: pt.x, y: box.y1 };
-    if (m === dl) return { x: box.x0, y: pt.y };
-    return { x: box.x1, y: pt.y };
+  // Hold the source on the prism's side of the copy. The prism sits
+  // outside textBox (placePrism guarantees it), so pushing the source
+  // past the copy's near edge keeps the whole source->prism beam off
+  // the text -- not just the source point.
+  function clearOfText(pt) {
+    if (!textBox) return pt;
+    const out = { x: pt.x, y: pt.y };
+    if (prism.cx >= textBox.x1) out.x = Math.max(out.x, textBox.x1);
+    else if (prism.cx <= textBox.x0) out.x = Math.min(out.x, textBox.x0);
+    if (prism.cy >= textBox.y1) out.y = Math.max(out.y, textBox.y1);
+    else if (prism.cy <= textBox.y0) out.y = Math.min(out.y, textBox.y0);
+    return out;
   }
 
-  // full keep-out: inside the hero, off the copy, out of the glass
+  // full keep-out: inside the hero, beam clear of the copy, out of glass
   function constrainTarget(x, y) {
     const m = 12;
-    let pt = { x: Math.max(m, Math.min(w - m, x)), y: Math.max(m, Math.min(h - m, y)) };
-    pt = pushOutRect(pt, textBox);
+    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+    let pt = { x: clamp(x, m, w - m), y: clamp(y, m, h - m) };
+    pt = clearOfText(pt);
+    pt = { x: clamp(pt.x, m, w - m), y: clamp(pt.y, m, h - m) };
     return clampOutOfPrism(pt.x, pt.y);
   }
 
@@ -389,9 +422,9 @@
 
   new ResizeObserver(() => { resize(); if (reduceMotion.matches) draw(); }).observe(hero);
 
-  // the copy reflows when the webfonts swap in - remeasure the keep-out
+  // the copy reflows when the webfonts swap in - remeasure everything
   if (document.fonts && document.fonts.ready) {
-    document.fonts.ready.then(() => { buildTextZone(); });
+    document.fonts.ready.then(() => { measureText(); placePrism(); setIdle(); });
   }
 
   hero.addEventListener("pointermove", (e) => {
