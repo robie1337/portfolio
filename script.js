@@ -73,6 +73,7 @@
   const hero = document.querySelector(".hero");
   if (!canvas || !hero) return;
   const ctx = canvas.getContext("2d");
+  const innerEl = hero.querySelector(".hero__inner");
 
   // magenta -> violet, with increasing refractive index.
   // Low-index "glass": at n~1.5 a 60-degree prism sits at the critical
@@ -98,6 +99,8 @@
 
   let w = 0, h = 0, dpr = 1;
   let prism = null;          // { verts, edges, normals, infl, cx, cy }
+  let textBox = null;        // keep-out rect around the hero copy
+  let idle = { x: 0, y: 0 }; // resting anchor for ambient drift
   let sx = 0, sy = 0, tx = 0, ty = 0;
   let lastPointer = 0, rafId = 0, heroVisible = true, tPrev = 0;
 
@@ -119,6 +122,32 @@
     prism = { verts, edges, normals, infl, cx, cy };
   }
 
+  // Tight bounds of the actual hero copy (block elements report
+  // full-width boxes, so measure the real glyph runs via a Range),
+  // padded, plus a resting anchor placed in free space.
+  function buildTextZone() {
+    textBox = null;
+    idle = { x: w * 0.3, y: Math.max(40, h * 0.22) };
+    if (!innerEl) return;
+    const range = document.createRange();
+    range.selectNodeContents(innerEl);
+    const rects = range.getClientRects();
+    if (!rects.length) return;
+    const hr = hero.getBoundingClientRect();
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const r of rects) {
+      x0 = Math.min(x0, r.left - hr.left); y0 = Math.min(y0, r.top - hr.top);
+      x1 = Math.max(x1, r.right - hr.left); y1 = Math.max(y1, r.bottom - hr.top);
+    }
+    textBox = { x0: x0 - 26, y0: y0 - 22, x1: x1 + 26, y1: y1 + 22 };
+    // rest in the gap between the copy and the prism if there's room,
+    // otherwise in the band above the copy
+    const gap = prism.verts[1].x - textBox.x1;
+    idle = gap > 120
+      ? { x: textBox.x1 + gap * 0.5, y: h * 0.32 }
+      : { x: Math.max(40, Math.min(w * 0.3, textBox.x0 + 40)), y: Math.max(34, textBox.y0 * 0.5) };
+  }
+
   function resize() {
     dpr = Math.min(devicePixelRatio || 1, 2);
     w = hero.clientWidth;
@@ -127,7 +156,11 @@
     canvas.height = Math.round(h * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     buildPrism();
-    if (!lastPointer) { tx = w * 0.16; ty = h * 0.3; sx = tx; sy = ty; }
+    buildTextZone();
+    if (!lastPointer) {
+      const p = constrainTarget(idle.x, idle.y);
+      tx = p.x; ty = p.y; sx = p.x; sy = p.y;
+    }
   }
 
   function inTriangle(pt, verts) {
@@ -172,8 +205,8 @@
 
   const reflect = (d, n) => norm(sub(d, mul(n, 2 * dot(d, n))));
 
-  // keep the (lerped) source target outside the inflated prism
-  function clampTarget(x, y) {
+  // keep the source outside the inflated prism (it lives in air)
+  function clampOutOfPrism(x, y) {
     const pt = { x, y };
     if (!inTriangle(pt, prism.infl)) return pt;
     const C = { x: prism.cx, y: prism.cy };
@@ -185,6 +218,26 @@
       if (hit !== null) t = Math.max(t, hit);
     }
     return add(C, mul(dir, t * 1.04));
+  }
+
+  // push a point to the nearest edge of a rect if it's inside
+  function pushOutRect(pt, box) {
+    if (!box) return pt;
+    if (pt.x < box.x0 || pt.x > box.x1 || pt.y < box.y0 || pt.y > box.y1) return pt;
+    const dl = pt.x - box.x0, dr = box.x1 - pt.x, dt = pt.y - box.y0, db = box.y1 - pt.y;
+    const m = Math.min(dl, dr, dt, db);
+    if (m === dt) return { x: pt.x, y: box.y0 };
+    if (m === db) return { x: pt.x, y: box.y1 };
+    if (m === dl) return { x: box.x0, y: pt.y };
+    return { x: box.x1, y: pt.y };
+  }
+
+  // full keep-out: inside the hero, off the copy, out of the glass
+  function constrainTarget(x, y) {
+    const m = 12;
+    let pt = { x: Math.max(m, Math.min(w - m, x)), y: Math.max(m, Math.min(h - m, y)) };
+    pt = pushOutRect(pt, textBox);
+    return clampOutOfPrism(pt.x, pt.y);
   }
 
   function stroke(p, q, width, style) {
@@ -298,11 +351,11 @@
     const dt = Math.min((t - tPrev) / 1000, 0.05);
     tPrev = t;
 
-    // ambient drift once the pointer has been idle (or never arrived)
+    // ambient drift around the idle anchor once the pointer's been idle
     if (performance.now() - lastPointer > 4000) {
-      const drift = clampTarget(
-        w * (0.16 + 0.05 * Math.sin(t / 7000)),
-        h * (0.34 + 0.10 * Math.sin(t / 9400 + 1.3))
+      const drift = constrainTarget(
+        idle.x + w * 0.04 * Math.sin(t / 7000),
+        idle.y + h * 0.05 * Math.sin(t / 9400 + 1.3)
       );
       tx = drift.x; ty = drift.y;
     }
@@ -336,9 +389,14 @@
 
   new ResizeObserver(() => { resize(); if (reduceMotion.matches) draw(); }).observe(hero);
 
+  // the copy reflows when the webfonts swap in - remeasure the keep-out
+  if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(() => { buildTextZone(); });
+  }
+
   hero.addEventListener("pointermove", (e) => {
     const r = hero.getBoundingClientRect();
-    const clamped = clampTarget(e.clientX - r.left, e.clientY - r.top);
+    const clamped = constrainTarget(e.clientX - r.left, e.clientY - r.top);
     tx = clamped.x;
     ty = clamped.y;
     lastPointer = performance.now();
